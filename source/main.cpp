@@ -5,7 +5,8 @@ Image background_image;
 Image fog_image;
 Texture background_texture;
 Texture fog_texture;
-int fog_reveal_radius = 100;
+int fog_reveal_radius = 50;
+bool fog_needs_update = true;
 Sound folk_music;
 
 
@@ -22,8 +23,12 @@ void draw()
 
 void update()
 {
-    UnloadTexture(fog_texture);
-    fog_texture = LoadTextureFromImage(fog_image);
+    if (fog_needs_update)
+    {
+        UnloadTexture(fog_texture);
+        fog_texture = LoadTextureFromImage(fog_image);
+        fog_needs_update = false;
+    }
 
     if (!IsSoundPlaying(folk_music))
     {
@@ -37,6 +42,7 @@ void check_events()
     if (IsMouseButtonDown(MOUSE_LEFT_BUTTON))
     {
         ImageDrawCircle(&fog_image, GetMouseX(), GetMouseY(), fog_reveal_radius, BLANK);
+        fog_needs_update = true;
     }
 }
 
@@ -52,10 +58,10 @@ void run()
 }
 
 
-void scale_and_center(Image * image, double max_width, double max_height)
+void scale_and_center(Image * image, double min_width, double min_height)
 {
-    double scale_x = max_width / image->width;
-    double scale_y = max_height / image->height;
+    double scale_x = min_width / image->width;
+    double scale_y = min_height / image->height;
     double scale = (scale_x > scale_y) ? (scale_x) : (scale_y);
     int new_width = static_cast<int> (image->width * scale);
     int new_height = static_cast<int> (image->height * scale);
@@ -70,7 +76,7 @@ int main()
     ToggleFullscreen();
     InitAudioDevice();
     SetMasterVolume(0.5);
-    SetTargetFPS(60);
+    SetTargetFPS(0);
 
     folk_music = LoadSound("../resources/sounds/folk_music.mp3");
     background_image = LoadImage("../resources/graphics/background.jpg");
